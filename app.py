@@ -34,6 +34,8 @@ preprocess = transforms.Compose([
 ])
 
 def transform_image(image_bytes):
+    print(type(image_bytes))
+    print(io.BytesIO(image_bytes))
     image = Image.open(io.BytesIO(image_bytes))
     return preprocess(image).unsqueeze(0)
 
