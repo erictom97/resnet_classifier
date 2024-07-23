@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Video Classification</title>
+    <style>
+        video {
+            width: 100%;
+            height: auto;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Video Feed</h1>
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
+    <p id="prediction"></p>
+    <a href="/">Back to Home</a>
+    
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const predictionText = document.getElementById('prediction');
+        const constraints = {
+            video: true
+        };
+
+        async function startVideo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing the camera: ', err);
+            }
+        }
+
+        function captureFrame() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        async function classifyFrame() {
+            const frame = captureFrame();
+            const response = await fetch('/classify_frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: frame })
+            });
+            const result = await response.json();
+            predictionText.innerText = `Prediction: ${result.class_name}`;
+        }
+
+        video.addEventListener('play', () => {
+            setInterval(classifyFrame, 1000); // Classify a frame every second
+        });
+
+        startVideo();
+    </script>
+</body>
+</html>
